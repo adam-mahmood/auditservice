@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "AuditRecord",
+  "namespace": "com.adam.auditservice.avro.schema",
+  "fields": [
+    {
+      "name": "calculationId",
+      "type": "int"
+    },
+    {
+      "name": "initialDeposit",
+      "type": "double"
+    },
+    {
+      "name": "totalGainedInterest",
+      "type": "double"
+    }]
+}

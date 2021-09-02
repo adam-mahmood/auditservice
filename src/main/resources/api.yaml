@@ -1,0 +1,149 @@
+---
+openapi: 3.0.0
+info:
+  title: Simple Interest Calculation API
+  description: This is a API for a credit card provider. It should allow you to add new credit card accounts and view them as a list.
+  contact:
+    email: you@your-company.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.1
+servers:
+- url: https://localhost/CredtCardAPI/1.0.1
+  description: SwaggerHub API Auto Mocking
+tags:
+- name: admins
+  description: Secured Admin-only calls
+- name: developers
+  description: Operations available to regular developers
+paths:
+  /v1/audits/{auditId}/calculations/{calculationId}/interest:
+    post:
+      tags:
+      - admins
+      summary: calculates total interest gained
+      security:
+        - oAuthSample: [write]   # Use OAuth with a different scope
+      description:  calculate total interest gained for a particular input
+      operationId: calculateTotalInterest
+      parameters:
+      - name: auditId
+        in: path
+        description: a particular id for a audit
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: calculationId
+        in: path
+        description: a particular id for a calculation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: Initial Deposit
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitialDeposit'
+        required: true
+      responses:
+        "201":
+          description: total interest gained calculated for initial deposit and stored in db
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TotalInterestGainedResponse'
+        "400":
+          description: invalid input, object invalid
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ErrorDetials'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ErrorDetials'
+        '403':
+          description: Access token does not have the required scope
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ErrorDetials'
+#apply security globally...
+security:
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+
+    oAuthSample:    # <---- arbitrary name
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow. [More info](https://api.example.com/docs/auth)
+      flows:
+        authorizationCode:
+          authorizationUrl: https://localhost:8083/oauth/authorize
+          tokenUrl: localhost:8083/oauth/token
+          scopes:
+            read: Grants read access
+            write: Grants write access
+            admin: Grants access to admin operations
+  schemas:
+    InitialDeposit:
+      required:
+      - depositValue
+      type: object
+      properties:
+        depositValue:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          format: integer
+          description: inital deposit
+          example: 1200
+    ErrorDetials:
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/JSONAPIErrorDetails'
+      description: a set of error codes and detatails recieved when trying to to complete the request
+    JSONAPIErrorDetails:
+      properties:
+        code:
+          type: integer
+          format: int32
+        details:
+          type: string
+        message:
+          type: string
+        reference:
+          type: string
+      description: Error detals object
+    TotalInterestGainedResponse:
+      allOf: # Combines the main `Initial Deposit` schema with Response
+        - $ref: '#/components/schemas/InitialDeposit'
+        - type: object
+      properties:
+        totalInterestGained:
+          type: number
+          minimum: 0
+          exclusiveMinimum: true
+          format: integer
